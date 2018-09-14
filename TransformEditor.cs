@@ -1,6 +1,6 @@
-// Custom transform inspector for Unity 2018.1.7f
-//MIT License
-//Copyright (c) 2018 mitay-walle
+/// Custom transform inspector for Unity 2018.1.7f
+///MIT License
+///Copyright (c) 2018 mitay-walle
 using UnityEngine;
 using UnityEditor;
 
