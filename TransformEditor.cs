@@ -30,7 +30,6 @@ public class TransformEditor : Editor
 		if (GUILayout.Button("X", GUILayout.Width(20f)))
 		{
 			Pos(serializedObject);
-			//Repaint();
 			return;
 		}
 
@@ -54,7 +53,6 @@ public class TransformEditor : Editor
 		if (GUILayout.Button("X", GUILayout.Width(20f)))
 		{
 			Sc(serializedObject);
-			//Repaint();
 			return;
 		}
 
@@ -111,7 +109,6 @@ public class TransformEditor : Editor
 			foreach (Object obj in targets)
 			{
 				Transform t = (Transform)obj;
-				eulerAngles = FixAngle(eulerAngles);
 				eulerAngles = FixIfNaN(eulerAngles);
 				TransformUtils.SetInspectorRotation(t,eulerAngles);
 			}
@@ -119,20 +116,6 @@ public class TransformEditor : Editor
 		}
 
 		EditorGUI.showMixedValue = false;
-	}
-
-	private Vector3 FixAngle(Vector3 v)
-	{
-		if (v.x > 359.999f) v.x -= 360f;
-		else if (v.x < -359.999f) v.x += 360f;
-		
-		if (v.y > 359.999f) v.y -= 360f;
-		else if (v.y < -359.999f) v.y += 360f;
-		
-		if (v.z > 359.999f) v.z -= 360f;
-		else if (v.z < -359.999f) v.z += 360f;
-		
-		return v;
 	}
 
 	private Vector3 FixIfNaN(Vector3 v)
