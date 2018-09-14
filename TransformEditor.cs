@@ -25,7 +25,7 @@ public class TransformEditor : Editor
 		serializedObject.Update();
 
 		EditorGUI.indentLevel = 0;
-		var oldWidth = EditorGUIUtility.labelWidth;
+		var oldWidth = EditorGUIUtility.labelWidth;https://github.com/mitay-walle/Unity_Stuff/blob/master/TransformEditor.cs
 		EditorGUIUtility.labelWidth = 60f;
 
 		GUILayout.BeginHorizontal();
