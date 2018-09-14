@@ -10,7 +10,7 @@ public class TransformEditor : Editor
 	private bool EnableFinished;
 	
 	void OnEnable()
-	{
+	{ 
 		if (!EnableFinished)
 		{
 			EnableFinished = true;
