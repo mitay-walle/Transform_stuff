@@ -75,7 +75,7 @@ public class TransformEditor : Editor
 		s.FindProperty("m_LocalPosition").vector3Value = Vector3.zero;
 		if (EditorGUI.EndChangeCheck()) serializedObject.ApplyModifiedProperties();
 	}
-
+ 
 	void Rot(SerializedObject s)
 	{
 		s.FindProperty("m_LocalRotation").quaternionValue = Quaternion.Euler(Vector3.zero);
