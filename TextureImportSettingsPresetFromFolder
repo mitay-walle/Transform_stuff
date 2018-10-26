@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.Presets;
 using UnityEngine;
 
-public class TextureImportSettingsPresetFromFolder : AssetPostprocessor
+public class ApplyPresetFromFolder : AssetPostprocessor
 {
 	void OnPostprocessTexture(Texture2D texture)
 	{
@@ -16,7 +16,11 @@ public class TextureImportSettingsPresetFromFolder : AssetPostprocessor
 		if (presets.Length > 0)
 		{
 			var preset = AssetDatabase.LoadAssetAtPath<Preset>(AssetDatabase.GUIDToAssetPath(presets[0]));
-			if (preset) Debug.Log("preset found, apply");
+			if (preset)
+			{
+				Debug.Log("preset found, apply",preset);
+				preset.ApplyTo(assetImporter);
+			}
 			else Debug.Log("preset NOT found");
 		}
 		else
