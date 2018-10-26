@@ -1,0 +1,27 @@
+using System;
+using UnityEditor;
+using UnityEditor.Presets;
+using UnityEngine;
+
+public class TextureImportSettingsPresetFromFolder : AssetPostprocessor
+{
+	void OnPostprocessTexture(Texture2D texture)
+	{
+		var folderPathSplitted = assetPath.Split('/');
+		var folderPath = assetPath.Split(new [] {folderPathSplitted[folderPathSplitted.Length-1]},StringSplitOptions.None)[0];
+		folderPath = folderPath.Remove(folderPath.Length - 1);
+		Debug.Log(folderPath);
+		var presets = AssetDatabase.FindAssets("t:Preset",new []{folderPath});
+		
+		if (presets.Length > 0)
+		{
+			var preset = AssetDatabase.LoadAssetAtPath<Preset>(AssetDatabase.GUIDToAssetPath(presets[0]));
+			if (preset) Debug.Log("preset found, apply");
+			else Debug.Log("preset NOT found");
+		}
+		else
+		{
+			Debug.Log("preset NOT found");
+		}
+	}
+}
