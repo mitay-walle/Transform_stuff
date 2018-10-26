@@ -14,11 +14,17 @@ public class ApplyPresetFromFolder : AssetPostprocessor
 	{
 		_normal, // имя файла - DefaultImportSettings_normal 
 		_specular, // имя файла - DefaultImportSettings_specular
-		_cubemap, // имя файла - DefaultImportSettings_cubemap
-		
-		// имя пресетки - DefaultImportSettings_UI . Их определяем по названию папки,
-		UI, // но пресетка должна лежать в той же общей папке PresetsFolderPath
-		   
+		_cubemap = 2, // имя файла - DefaultImportSettings_cubemap
+		_UI = 3 // имя файла - DefaultImportSettings_UI
+
+	}
+
+	enum FolderNameKeys
+	{
+		Cubemaps = 2, // имя файла - DefaultImportSettings_Cubemaps
+		// имя файла - DefaultImportSettings_UI . Их определяем по названию папки,
+		UI = 3, // но пресетка должна лежать в той же общей папке PresetsFolderPath
+		GUI = 3, // пресетка будет общая
 	}
 	
 	void OnPostprocessTexture(Texture2D texture)
@@ -57,11 +63,19 @@ public class ApplyPresetFromFolder : AssetPostprocessor
 			Debug.Log("preset NOT found");
 		}
 
-		var FolderNames = folderPathSplitted.ToList();
+		var folderNameKeys = Enum.GetValues(typeof(FolderNameKeys));
 		
-		if (FolderNames.Contains(textureCustomTypes.UI.ToString()))
+		var FolderNames = folderPathSplitted;
+
+
+		for (int i = 0; i < FolderNames.Length; i++)
+		for (int j = 0; j < folderNameKeys.Length; j++)
+		if (FolderNames[i].Equals(folderNameKeys.GetValue(j).ToString()))
 		{
-			var preset = AssetDatabase.LoadAssetAtPath<Preset>(PresetsFolderPath + textureCustomTypes.UI);
+			var type = (FolderNameKeys)folderNameKeys.GetValue(j);
+			//var stringType = type.ToString();
+			
+			var preset = AssetDatabase.LoadAssetAtPath<Preset>(PresetsFolderPath + (textureCustomTypes)type);
 			if (Apply(preset,texture)) return;
 		}
 		else
