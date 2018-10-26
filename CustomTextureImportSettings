@@ -1,0 +1,105 @@
+using System;
+using System.Linq;
+using UnityEditor;
+using UnityEditor.Presets;
+using UnityEngine;
+
+// ReSharper disable StringIndexOfIsCultureSpecific.1
+public class ApplyPresetFromFolder : AssetPostprocessor
+{
+    //имя папки: 'Assets/Presets/' + общая часть имени файлов: 'DefaultImportSettings_...'
+    const string PresetsFolderPath = "Assets/Presets/DefaultImportSettings_";
+const string typePostfix = ".preset";
+    //сли нужно определить по имени файла
+    enum textureCustomTypes
+    {
+        normal, // имя файла - DefaultImportSettings_normal 
+        specular, // имя файла - DefaultImportSettings_specular
+        cubemap = 2, // имя файла - DefaultImportSettings_cubemap
+        UI = 3 // имя файла - DefaultImportSettings_UI
+    }
+
+
+    // если нужно определить по имени папки
+    enum FolderNameKeys
+    {
+        Cubemaps = 2, // имя файла - DefaultImportSettings_cubemap
+        UI = 3, // но пресетка должна лежать в той же общей папке PresetsFolderPath
+        GUI = 3, // пресетка будет общая
+    }
+
+    void OnPostprocessTexture(Texture2D texture)
+    {
+        string lowerTextureName = texture.name.ToLower();
+
+        var folderPathSplitted = assetPath.Split('/');
+
+        var folderPath = assetPath.Split(new[] {folderPathSplitted[folderPathSplitted.Length - 1]},
+            StringSplitOptions.None)[0];
+
+        folderPath = folderPath.Remove(folderPath.Length - 1);
+
+        var types = Enum.GetNames(typeof(textureCustomTypes));
+
+
+        // по типам
+        for (int i = 0; i < types.Length - 1; i++)
+        {
+            if (lowerTextureName.Contains(types[i]))
+            {
+                var preset = AssetDatabase.LoadAssetAtPath<Preset>(PresetsFolderPath + types[i] + typePostfix);
+
+                if (Apply(preset, texture)) return;
+            }
+        }
+
+        var presets = AssetDatabase.FindAssets("t:Preset", new[] {folderPath});
+
+        if (presets.Length > 0)
+        {
+            var preset = AssetDatabase.LoadAssetAtPath<Preset>(AssetDatabase.GUIDToAssetPath(presets[0]));
+            if (Apply(preset, texture)) return;
+        }
+
+
+        var folderNameKeys = Enum.GetValues(typeof(FolderNameKeys));
+
+        var FolderNames = folderPathSplitted;
+
+
+        for (int i = 0; i < FolderNames.Length; i++)
+        for (int j = 0; j < folderNameKeys.Length; j++)
+        {
+            var folderName = FolderNames[i];
+            var type = (FolderNameKeys) folderNameKeys.GetValue(j);
+
+            //Debug.Log(folderName + " " + Enum.IsDefined(typeof(FolderNameKeys),folderName));
+
+            if (Enum.IsDefined(typeof(FolderNameKeys),folderName))
+            {
+                FolderNameKeys parsedFolderName = (FolderNameKeys)Enum.Parse(typeof(FolderNameKeys), FolderNames[i]);
+                //Debug.Log(PresetsFolderPath + (textureCustomTypes) parsedFolderName);
+                
+                var preset = AssetDatabase.LoadAssetAtPath<Preset>(PresetsFolderPath + (textureCustomTypes) parsedFolderName + typePostfix);
+                if (Apply(preset, texture)) return;
+            }
+        }
+        Debug.Log("preset NOT found");
+    }
+
+    bool Apply(Preset preset, Texture2D text)
+    {
+        if (!preset)
+        {
+            //Debug.Log("preset NOT found");
+            return false;
+        }
+
+        Debug.Log("настройки импорта из " + preset, preset);
+        Debug.Log("применены к " + text.name, assetImporter);
+        preset.ApplyTo(assetImporter);
+        assetImporter.SaveAndReimport();
+        //EditorUtility.SetDirty(assetImporter);
+        return true;
+    }
+}
