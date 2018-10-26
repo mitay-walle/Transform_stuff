@@ -4,13 +4,13 @@ using UnityEditor;
 using UnityEditor.Presets;
 using UnityEngine;
 
-// ReSharper disable StringIndexOfIsCultureSpecific.1
 public class ApplyPresetFromFolder : AssetPostprocessor
 {
-    //имя папки: 'Assets/Presets/' + общая часть имени файлов: 'DefaultImportSettings_...'
+    //и мя папки: 'Assets/Presets/' + общая часть имени файлов: 'DefaultImportSettings_...'
     const string PresetsFolderPath = "Assets/Presets/DefaultImportSettings_";
-const string typePostfix = ".preset";
-    //сли нужно определить по имени файла
+    const string typePostfix = ".preset";
+
+    // если нужно определить по имени файла
     enum textureCustomTypes
     {
         normal, // имя файла - DefaultImportSettings_normal 
@@ -42,7 +42,7 @@ const string typePostfix = ".preset";
         var types = Enum.GetNames(typeof(textureCustomTypes));
 
 
-        // по типам
+        // по имени файла
         for (int i = 0; i < types.Length - 1; i++)
         {
             if (lowerTextureName.Contains(types[i]))
@@ -53,6 +53,7 @@ const string typePostfix = ".preset";
             }
         }
 
+        // ищем пресетку в папке
         var presets = AssetDatabase.FindAssets("t:Preset", new[] {folderPath});
 
         if (presets.Length > 0)
@@ -62,10 +63,10 @@ const string typePostfix = ".preset";
         }
 
 
+        //  по имени папки
         var folderNameKeys = Enum.GetValues(typeof(FolderNameKeys));
 
         var FolderNames = folderPathSplitted;
-
 
         for (int i = 0; i < FolderNames.Length; i++)
         for (int j = 0; j < folderNameKeys.Length; j++)
