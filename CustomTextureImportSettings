@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class ApplyPresetFromFolder : AssetPostprocessor
 {
-    //и мя папки: 'Assets/Presets/' + общая часть имени файлов: 'DefaultImportSettings_...'
+    // имя папки: 'Assets/Presets/' + общая часть имени файлов: 'DefaultImportSettings_...'
     const string PresetsFolderPath = "Assets/Presets/DefaultImportSettings_";
     const string typePostfix = ".preset";
 
