@@ -1,13 +1,20 @@
 using System;
 using System.Linq;
+using System.Xml;
+using System.Xml.Linq;
 using UnityEditor;
 using UnityEditor.Presets;
 using UnityEngine;
+#pragma warning disable 1591
 
-public class ApplyPresetFromFolder : AssetPostprocessor
+// ReSharper disable StringIndexOfIsCultureSpecific.1
+public class CustomTextureImportPostprocessor : AssetPostprocessor
 {
+    public static bool FirstLaunch = true;
+
     // имя папки: 'Assets/Presets/' + общая часть имени файлов: 'DefaultImportSettings_...'
     const string PresetsFolderPath = "Assets/Presets/DefaultImportSettings_";
+
     const string typePostfix = ".preset";
 
     // если нужно определить по имени файла
@@ -28,8 +35,13 @@ public class ApplyPresetFromFolder : AssetPostprocessor
         GUI = 3, // пресетка будет общая
     }
 
+
     void OnPostprocessTexture(Texture2D texture)
     {
+        if (!isFirstLaunch(assetImporter, texture))
+            return;
+
+
         string lowerTextureName = texture.name.ToLower();
 
         var folderPathSplitted = assetPath.Split('/');
@@ -42,7 +54,7 @@ public class ApplyPresetFromFolder : AssetPostprocessor
         var types = Enum.GetNames(typeof(textureCustomTypes));
 
 
-        // по имени файла
+        // по типам
         for (int i = 0; i < types.Length - 1; i++)
         {
             if (lowerTextureName.Contains(types[i]))
@@ -53,7 +65,6 @@ public class ApplyPresetFromFolder : AssetPostprocessor
             }
         }
 
-        // ищем пресетку в папке
         var presets = AssetDatabase.FindAssets("t:Preset", new[] {folderPath});
 
         if (presets.Length > 0)
@@ -63,12 +74,12 @@ public class ApplyPresetFromFolder : AssetPostprocessor
         }
 
 
-        //  по имени папки
         var folderNameKeys = Enum.GetValues(typeof(FolderNameKeys));
 
         var FolderNames = folderPathSplitted;
 
-        for (int i = 0; i < FolderNames.Length; i++)
+
+        for (int i = FolderNames.Length - 1; i >= 0; i--) // самая нижняя папка в приоритете
         for (int j = 0; j < folderNameKeys.Length; j++)
         {
             var folderName = FolderNames[i];
@@ -76,15 +87,18 @@ public class ApplyPresetFromFolder : AssetPostprocessor
 
             //Debug.Log(folderName + " " + Enum.IsDefined(typeof(FolderNameKeys),folderName));
 
-            if (Enum.IsDefined(typeof(FolderNameKeys),folderName))
+            if (Enum.IsDefined(typeof(FolderNameKeys), folderName))
             {
-                FolderNameKeys parsedFolderName = (FolderNameKeys)Enum.Parse(typeof(FolderNameKeys), FolderNames[i]);
+                FolderNameKeys parsedFolderName = (FolderNameKeys) Enum.Parse(typeof(FolderNameKeys), FolderNames[i]);
                 //Debug.Log(PresetsFolderPath + (textureCustomTypes) parsedFolderName);
-                
-                var preset = AssetDatabase.LoadAssetAtPath<Preset>(PresetsFolderPath + (textureCustomTypes) parsedFolderName + typePostfix);
+
+                var preset =
+                    AssetDatabase.LoadAssetAtPath<Preset>(PresetsFolderPath + (textureCustomTypes) parsedFolderName +
+                                                          typePostfix);
                 if (Apply(preset, texture)) return;
             }
         }
+
         Debug.Log("preset NOT found");
     }
 
@@ -99,8 +113,91 @@ public class ApplyPresetFromFolder : AssetPostprocessor
         Debug.Log("настройки импорта из " + preset, preset);
         Debug.Log("применены к " + text.name, assetImporter);
         preset.ApplyTo(assetImporter);
-        assetImporter.SaveAndReimport();
+        //assetImporter.SaveAndReimport();
         //EditorUtility.SetDirty(assetImporter);
         return true;
+    }
+
+
+    bool isFirstLaunch(AssetImporter importer, Texture2D tex)
+    {
+        if (FirstLaunch)
+        {
+            Debug.Log("first lanch = true");
+
+            if (EditorPrefs.HasKey(key))
+            {
+                Debug.Log("has key");
+                FirstLaunch = EditorPrefs.GetBool(key);
+            }
+        }
+
+        Debug.Log("first lanch = " + FirstLaunch);
+        if (FirstLaunch)
+        {
+            Debug.Log("first launch");
+
+            if (EditorUtility.DisplayDialog("ВНИМАНИЕ",
+                "Вы в первый раз запустили CustomTextureImportPostprocessor, отметить все текстуры, как уже обработанные, чтобы избежать изменения их настроек импорта?",
+                "да", "нет"))
+            {
+                var texGUIDs = AssetDatabase.FindAssets("t:Texture2D", new[] {"Assets"});
+
+                var targetGUID = new GUID(AssetDatabase.AssetPathToGUID(assetImporter.assetPath));
+                var counter = 0;
+                var count = texGUIDs.Length;
+                for (int i = 0; i < count; i++)
+                {
+
+                    if (!targetGUID.Equals(new GUID(texGUIDs[i])))
+                    {
+                        AssetDatabase.ImportAsset(AssetDatabase.GUIDToAssetPath(texGUIDs[i]));
+                        counter++;
+                    }
+                }
+                Debug.Log("обработано: " + counter + " текстур");
+
+                FirstLaunch = false;
+                EditorPrefs.SetBool(key, FirstLaunch);
+            }
+        }
+
+        
+        var s = importer.userData;
+        var foundValue = false;
+
+        if (s.Length == 0)
+        {
+            s = key;
+        }
+        else
+        {
+            foundValue = s.Contains(key);
+        }
+
+        if (!foundValue)
+        {
+            s += key;
+            Debug.Log("first import for " + tex.name);
+        }
+        else
+        {
+            Debug.Log("already imported" + tex.name);
+        }
+
+        return !foundValue;
+    }
+
+    const string key = " CustomTextureImportPostprocessor_FirstLaunch ";
+
+    [MenuItem("Tools/Custom Texture Importer/Reset first launch")]
+    public static void ResetFirstLaunch()
+    {
+        EditorPrefs.SetBool(key, true);
+        
+        var texGUIDs = AssetDatabase.FindAssets("t:Texture2D", new[] {"Assets"});
+        
+        AssetDatabase.ImportAsset(AssetDatabase.GUIDToAssetPath(texGUIDs[0]));
+        
     }
 }
