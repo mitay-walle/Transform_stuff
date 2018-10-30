@@ -23,7 +23,8 @@ public class CustomTextureImportPostprocessor : AssetPostprocessor
         normal, // имя файла - DefaultImportSettings_normal 
         specular, // имя файла - DefaultImportSettings_specular
         cubemap = 2, // имя файла - DefaultImportSettings_cubemap
-        UI = 3 // имя файла - DefaultImportSettings_UI
+        UI = 3, // имя файла - DefaultImportSettings_UI
+        level = 4 // имя файла - DefaultImportSettings_UI
     }
 
 
@@ -33,6 +34,7 @@ public class CustomTextureImportPostprocessor : AssetPostprocessor
         Cubemaps = 2, // имя файла - DefaultImportSettings_cubemap
         UI = 3, // но пресетка должна лежать в той же общей папке PresetsFolderPath
         GUI = 3, // пресетка будет общая
+        Levels = 4,
     }
 
 
@@ -102,7 +104,7 @@ public class CustomTextureImportPostprocessor : AssetPostprocessor
         Debug.Log("preset NOT found");
     }
 
-    bool Apply(Preset preset, Texture2D text)
+    bool Apply(Preset preset, Texture2D tex)
     {
         if (!preset)
         {
@@ -111,8 +113,33 @@ public class CustomTextureImportPostprocessor : AssetPostprocessor
         }
 
         Debug.Log("настройки импорта из " + preset, preset);
-        Debug.Log("применены к " + text.name, assetImporter);
+        Debug.Log("применены к " + tex.name, assetImporter);
         preset.ApplyTo(assetImporter);
+        
+        var s = assetImporter.userData;
+        var foundValue = false;
+
+        if (s.Length == 0)
+        {
+            s = key;
+        }
+        else
+        {
+            foundValue = s.Contains(key);
+        }
+
+        if (!foundValue)
+        {
+            s += key;
+            Debug.Log("first import for " + tex.name);
+        }
+        else
+        {
+            Debug.Log("already imported" + tex.name);
+        }
+        assetImporter.userData = s;
+        AssetDatabase.WriteImportSettingsIfDirty(assetImporter.assetPath);
+
         //assetImporter.SaveAndReimport();
         //EditorUtility.SetDirty(assetImporter);
         return true;
@@ -141,7 +168,10 @@ public class CustomTextureImportPostprocessor : AssetPostprocessor
                 "Вы в первый раз запустили CustomTextureImportPostprocessor, отметить все текстуры, как уже обработанные, чтобы избежать изменения их настроек импорта?",
                 "да", "нет"))
             {
+                AssetDatabase.StartAssetEditing();
+
                 var texGUIDs = AssetDatabase.FindAssets("t:Texture2D", new[] {"Assets"});
+
 
                 var targetGUID = new GUID(AssetDatabase.AssetPathToGUID(assetImporter.assetPath));
                 var counter = 0;
@@ -155,10 +185,13 @@ public class CustomTextureImportPostprocessor : AssetPostprocessor
                         counter++;
                     }
                 }
+                AssetDatabase.StopAssetEditing();
+
                 Debug.Log("обработано: " + counter + " текстур");
 
                 FirstLaunch = false;
                 EditorPrefs.SetBool(key, FirstLaunch);
+                
             }
         }
 
@@ -185,6 +218,9 @@ public class CustomTextureImportPostprocessor : AssetPostprocessor
             Debug.Log("already imported" + tex.name);
         }
 
+        importer.userData = s;
+
+        
         return !foundValue;
     }
 
