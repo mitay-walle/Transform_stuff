@@ -6,8 +6,8 @@ public class PreviewVFXAndAnimation : MonoBehaviour
     public ParticleSystem VFX;
     public Animator Anim;
 
-    public string animName;
-    public int AnimationLayer;
+    public string AnimatorStateName;
+    public int AnimatorLayerIndex;
     [Range(0f,3f)]
     public float CurrentTime;
 
@@ -21,7 +21,7 @@ public class PreviewVFXAndAnimation : MonoBehaviour
 //            VFX.Simulate(CurrentTime, true, true);
             VFX.time = CurrentTime;
         }
-        setAnimationFrame(animName, AnimationLayer,CurrentTime);
+        setAnimationFrame(AnimatorStateName, AnimatorLayerIndex,CurrentTime);
         if (lastAutoPlay != AutoPlay)
         {
             lastAutoPlay = AutoPlay;
@@ -37,9 +37,10 @@ public class PreviewVFXAndAnimation : MonoBehaviour
         if (CurrentTime > 2.99f)
         {
             CurrentTime = 0f;
+            if (!VFX.isPlaying) VFX.Play();
             VFX.time = CurrentTime;
         }
-        setAnimationFrame(animName, AnimationLayer,CurrentTime);
+        setAnimationFrame(AnimatorStateName, AnimatorLayerIndex,CurrentTime);
     }
 
     private void setAnimationFrame(string animationName, int layer, float normalizedTime)
